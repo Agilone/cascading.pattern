@@ -7,23 +7,23 @@
 package pattern.model;
 
 
+import cascading.tuple.Fields;
+import cascading.tuple.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import pattern.PMML;
+import pattern.PatternException;
+import pattern.model.tree.Context;
+import pattern.model.tree.TreeModel;
+
+import javax.xml.xpath.XPathConstants;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import cascading.tuple.Fields;
-import cascading.tuple.Tuple;
-import pattern.PMML;
-import pattern.PatternException;
-import pattern.model.tree.Context;
-import pattern.model.tree.TreeModel;
 
 
 public class MiningModel extends Model implements Serializable
@@ -33,6 +33,7 @@ public class MiningModel extends Model implements Serializable
 
   public Context context = null;
   public List<Model> segments = new ArrayList<Model>();
+  public String multipleModelMethod = null;
   public Map<String, Integer> votes = new HashMap<String, Integer>();
 
   /**
@@ -45,6 +46,10 @@ public class MiningModel extends Model implements Serializable
     this.context = new Context();
 
     schema.parseMiningSchema( pmml.getNodeList( "/PMML/MiningModel/MiningSchema/MiningField" ) );
+
+    String nodeMultiMethod = "/PMML/MiningModel/Segmentation/@multipleModelMethod";
+    multipleModelMethod =  pmml.getReader().read( nodeMultiMethod, XPathConstants.STRING ).toString();
+
 
     String expr = "/PMML/MiningModel/Segmentation/Segment";
     NodeList node_list = pmml.getNodeList( expr );
@@ -104,16 +109,33 @@ public class MiningModel extends Model implements Serializable
       votes.put( label, winning_vote );
       }
 
-    // determine the winning label
-
-    for( String key : votes.keySet() )
+    if(multipleModelMethod.equals("average"))
       {
-      if( votes.get( key ) > winning_vote )
+        Double total = 0.0;
+        int count = 0;
+
+        for( String key: votes.keySet())
+          {
+            total += Double.parseDouble(key)*votes.get(key);
+            count+=votes.get(key);
+
+          }
+        Double value = total/count;
+        label = value.toString();
+      }
+    // determine the winning label (majorityVote)
+    else
+      {
+      for( String key : votes.keySet() )
         {
-        label = key;
-        winning_vote = votes.get( key );
+        if( votes.get( key ) > winning_vote )
+          {
+          label = key;
+          winning_vote = votes.get( key );
+          }
         }
       }
+
 
     return label;
     }
