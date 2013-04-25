@@ -55,6 +55,37 @@ write.table(out, file=paste(dat_folder, "iris.rf.tsv", sep="/"), quote=FALSE, se
 saveXML(pmml(fit, copyright=COPY), file=paste(dat_folder, "iris.rf.xml", sep="/"))
 
 
+## train a Random Forest model regression
+## example: http://mkseo.pe.kr/stats/?p=220
+print("model: Random Forest")
+
+myiris <- cbind(iris_full, setosa=ifelse(iris_full$species=="setosa", 1, 0))
+myiris <- cbind(myiris, versicolor=ifelse(iris_full$species=="versicolor", 1, 0))
+myiris <- cbind(myiris, virginica=ifelse(iris_full$species=="virginica", 1, 0))
+myiris <- myiris[,-5] # drop the old labels
+
+idx <- sample(150, 100)
+my_iris_train <- myiris[idx,]
+my_iris_test <- myiris[-idx,]
+
+
+f <- as.formula("setosa ~ sepal_length + sepal_width + petal_length + petal_width")
+fit <- randomForest(f, data=my_iris_train, proximity=TRUE, ntree=50)
+
+print(fit$importance)
+print(fit)
+print(table(my_iris_test$setosa, predict(fit, my_iris_test, type="class")))
+
+plot(fit, log="y", main="Random Forest")
+varImpPlot(fit)
+MDSplot(fit, myiris$setosa)
+
+out <- myiris
+out$predict <- predict(fit, out, type="class")
+
+write.table(out, file=paste(dat_folder, "iris.rf.bin.tsv", sep="/"), quote=FALSE, sep="\t", row.names=FALSE)
+saveXML(pmml(fit, copyright=COPY), file=paste(dat_folder, "iris.rf.bin.xml", sep="/"))
+
 ## train a Linear Regression predictive model
 ## example: http://www2.warwick.ac.uk/fac/sci/moac/people/students/peter_cock/r/iris_lm/
 print("model: Linear Regression - predictive model")
