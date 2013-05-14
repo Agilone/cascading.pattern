@@ -6,23 +6,21 @@
 
 package pattern;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import javax.xml.xpath.XPathConstants;
-
+import cascading.tuple.Fields;
+import cascading.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import cascading.tuple.Fields;
-import cascading.tuple.Tuple;
 import pattern.datafield.DataField;
 import pattern.datafield.DataFieldFactory;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 
 public class Schema extends LinkedHashMap<String, DataField> implements Serializable
@@ -162,11 +160,13 @@ public class Schema extends LinkedHashMap<String, DataField> implements Serializ
 
   /**
    * Returns a Map of names/values for each field in the Tuple.
+   *
    * @param values
+   * @param fields
    * @return Map<String, Object>
    * @throws PatternException
    */
-  public Map<String, Object> getParamMap( Tuple values ) throws PatternException
+  public Map<String, Object> getParamMap(Tuple values, Fields fields) throws PatternException
     {
     HashMap<String, Object> param_map = new HashMap<String, Object>();
     Iterator<DataField> iter = values().iterator();
@@ -174,7 +174,7 @@ public class Schema extends LinkedHashMap<String, DataField> implements Serializ
     for( int i = 0; i < size(); i++ )
       {
       DataField df = iter.next();
-      param_map.put( df.name, df.getValue( values, i ) );
+      param_map.put( df.name, df.getValue( values, fields.getPos(df.name) ) );
       }
 
     return param_map;

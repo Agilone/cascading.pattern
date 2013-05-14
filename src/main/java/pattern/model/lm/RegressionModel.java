@@ -92,7 +92,7 @@ public class RegressionModel extends Model implements Serializable
   @Override
   public String classifyTuple(Tuple values, Fields fields) throws PatternException
     {
-    Map<String, Object> param_map = schema.getParamMap( values );
+    Map<String, Object> param_map = schema.getParamMap( values,fields );
     double result = intercept;
 
     for( Predictor pred : predictors )
